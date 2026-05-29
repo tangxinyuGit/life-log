@@ -1,0 +1,33 @@
+# Life Log (生活日志) - Docker Compose 配置
+# 使用 `docker compose up` 启动所有服务
+# 使用 `docker compose up -d` 后台运行
+# 使用 `docker compose down` 停止所有服务
+
+services:
+  # ============================================
+  # 后端服务 - FastAPI + SQLAlchemy + SQLite
+  # ============================================
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # 将本地 data 目录挂载到容器中，持久化 SQLite 数据库
+      - ./data:/app/data
+    environment:
+      # SQLite 数据库连接字符串（使用 aiosqlite 异步驱动）
+      - DATABASE_URL=sqlite+aiosqlite:///./data/app.db
+    restart: unless-stopped
+
+  # ============================================
+  # 前端服务 - React + Vite + TypeScript (nginx)
+  # ============================================
+  frontend:
+    build: ./frontend
+    ports:
+      # 宿主机 3000 端口映射到容器 nginx 的 80 端口
+      - "3000:80"
+    depends_on:
+      # 确保后端服务先启动
+      - backend
+    restart: unless-stopped
