@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { Entry, Category } from '../types';
-import { getEntries, getCategories, deleteEntry } from '../api';
+import { useState, useCallback } from 'react';
+import type { Entry } from '../types';
+import { getEntries, deleteEntry } from '../api';
 import { catDisplay } from '../helpers';
 
 // ---- helpers ------------------------------------------------
@@ -43,7 +43,6 @@ export default function Search() {
   const [startDate, setStartDate] = useState(daysAgo(7));
   const [endDate, setEndDate] = useState(todayStr());
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +50,6 @@ export default function Search() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const PAGE_SIZE = 20;
-
-  useEffect(() => {
-    getCategories().then(setCategories).catch(() => {});
-  }, []);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -188,7 +183,7 @@ export default function Search() {
           </div>
           <div className="search-results">
             {entries.map((entry) => {
-              const cat = categories.find((c) => c.id === entry.category_id);
+              const d = catDisplay(entry.category);
               return (
                 <div key={entry.id} className="search-item">
                   <div className="search-item-left">
@@ -199,21 +194,16 @@ export default function Search() {
                       </span>
                     </div>
                     <div className="search-item-meta">
-                      {(() => {
-                        const d = catDisplay(cat ?? null);
-                        return (
-                          <span
-                            className="category-badge"
-                            style={{
-                              '--badge-bg': d.color + '18',
-                              '--badge-color': d.color,
-                            } as React.CSSProperties}
-                          >
-                            <span className="category-badge-dot" />
-                            {d.name}
-                          </span>
-                        );
-                      })()}
+                      <span
+                        className="category-badge"
+                        style={{
+                          '--badge-bg': d.color + '18',
+                          '--badge-color': d.color,
+                        } as React.CSSProperties}
+                      >
+                        <span className="category-badge-dot" />
+                        {d.name}
+                      </span>
                       {entry.tags.map((t) => (
                         <span key={t.id} className="tag-badge">{t.name}</span>
                       ))}

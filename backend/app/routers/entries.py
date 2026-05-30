@@ -19,14 +19,14 @@ MAX_TAG_LENGTH = 50
 # Helper: resolve tag names → Tag objects, auto-creating if needed
 # ---------------------------------------------------------------------------
 async def _resolve_tags(session: AsyncSession, tag_names: list[str]) -> list[Tag]:
-    # Trim, strip empties, truncate, case-insensitive deduplicate
+    # Trim, strip empties, truncate, lower-case (tags are case-insensitive)
     cleaned: list[str] = []
     seen: set[str] = set()
     for raw in tag_names:
-        name = raw.strip()[:MAX_TAG_LENGTH]
-        if name and name.lower() not in seen:
+        name = raw.strip().lower()[:MAX_TAG_LENGTH]
+        if name and name not in seen:
             cleaned.append(name)
-            seen.add(name.lower())
+            seen.add(name)
 
     if not cleaned:
         return []

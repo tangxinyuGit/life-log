@@ -81,7 +81,7 @@ class EntryRead(BaseModel):
     note: str
     mood: Optional[int] = None
     energy: Optional[int] = None
-    tags: list[TagRead] = []
+    tags: list[TagRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
