@@ -88,6 +88,32 @@ async def _reload_entry(session: AsyncSession, entry_id: int) -> TimeEntry:
 
 
 # ---------------------------------------------------------------------------
+# Helper: check for overlapping entries
+# ---------------------------------------------------------------------------
+async def _check_overlap(
+    session: AsyncSession,
+    start_time: datetime,
+    end_time: datetime,
+    exclude_id: int | None = None,
+) -> None:
+    """Raise 409 if any entry overlaps with [start_time, end_time)."""
+    stmt = select(TimeEntry).where(
+        TimeEntry.start_time < end_time,
+        TimeEntry.end_time > start_time,
+    )
+    if exclude_id is not None:
+        stmt = stmt.where(TimeEntry.id != exclude_id)
+
+    result = await session.execute(stmt)
+    conflict = result.scalar_one_or_none()
+    if conflict is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"时间与已有记录「{conflict.title}」重叠",
+        )
+
+
+# ---------------------------------------------------------------------------
 # Entries CRUD
 # ---------------------------------------------------------------------------
 
@@ -100,6 +126,7 @@ async def create_entry(
         raise HTTPException(status_code=422, detail="end_time must be after start_time")
 
     await _validate_category(session, body.category_id)
+    await _check_overlap(session, body.start_time, body.end_time)
 
     tags = await _resolve_tags(session, body.tags)
 
@@ -220,6 +247,8 @@ async def update_entry(
     new_end = update_data.get("end_time", entry.end_time)
     if new_end <= new_start:
         raise HTTPException(status_code=422, detail="end_time must be after start_time")
+
+    await _check_overlap(session, new_start, new_end, exclude_id=entry_id)
 
     # Validate category_id if being updated
     if "category_id" in update_data:

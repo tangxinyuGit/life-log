@@ -176,7 +176,13 @@ export default function EntryForm({
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存失败');
+      const msg = err instanceof Error ? err.message : '保存失败';
+      // 409 → friendly overlap message
+      if (msg.includes('409')) {
+        setError(msg.replace('API 409: ', ''));
+      } else {
+        setError(msg);
+      }
     } finally {
       setSaving(false);
     }

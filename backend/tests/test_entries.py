@@ -129,6 +129,74 @@ async def test_categories_name_conflict(client, setup_db):
     assert resp.status_code == 409
 
 
+# ---- OVERLAP ----
+
+async def test_create_entry_overlap(client, setup_db):
+    cid = setup_db["first_category_id"]
+    # Create first entry
+    await client.post("/api/v1/entries", json={
+        "title": "first",
+        "start_time": "2026-05-30T10:00:00",
+        "end_time": "2026-05-30T12:00:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    # Overlap — fully inside
+    resp = await client.post("/api/v1/entries", json={
+        "title": "inside",
+        "start_time": "2026-05-30T11:00:00",
+        "end_time": "2026-05-30T11:30:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    assert resp.status_code == 409
+    assert "重叠" in resp.json()["detail"]
+
+
+async def test_create_entry_no_overlap(client, setup_db):
+    cid = setup_db["first_category_id"]
+    await client.post("/api/v1/entries", json={
+        "title": "first",
+        "start_time": "2026-05-30T10:00:00",
+        "end_time": "2026-05-30T12:00:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    # Adjacent — no overlap (12:00 == 12:00)
+    resp = await client.post("/api/v1/entries", json={
+        "title": "adjacent",
+        "start_time": "2026-05-30T12:00:00",
+        "end_time": "2026-05-30T13:00:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    assert resp.status_code == 201
+
+
+async def test_update_entry_overlap_excludes_self(client, setup_db):
+    cid = setup_db["first_category_id"]
+    # Create two entries
+    await client.post("/api/v1/entries", json={
+        "title": "entry-a",
+        "start_time": "2026-05-30T10:00:00",
+        "end_time": "2026-05-30T12:00:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    await client.post("/api/v1/entries", json={
+        "title": "entry-b",
+        "start_time": "2026-05-30T13:00:00",
+        "end_time": "2026-05-30T14:00:00",
+        "category_id": cid,
+        "tags": [],
+    })
+    # Expanding entry-a to overlap entry-b should fail
+    resp = await client.put("/api/v1/entries/1", json={
+        "end_time": "2026-05-30T13:30:00",
+    })
+    assert resp.status_code == 409
+
+
 # ---- 404 ----
 
 async def test_get_entry_not_found(client, setup_db):
