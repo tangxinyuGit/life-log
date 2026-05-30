@@ -57,7 +57,7 @@ class EntryCreate(BaseModel):
     note: str = ""
     mood: Optional[int] = Field(default=None, ge=1, le=5)
     energy: Optional[int] = Field(default=None, ge=1, le=5)
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 
 class EntryUpdate(BaseModel):
@@ -68,7 +68,7 @@ class EntryUpdate(BaseModel):
     note: Optional[str] = None
     mood: Optional[int] = Field(default=None, ge=1, le=5)
     energy: Optional[int] = Field(default=None, ge=1, le=5)
-    tags: Optional[list[str]] = None
+    tags: Optional[list[str]] = Field(default=None)
 
 
 class EntryRead(BaseModel):

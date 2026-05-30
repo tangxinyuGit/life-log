@@ -7,32 +7,84 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_session
-from app.models import Tag, TimeEntry
+from app.models import Category, Tag, TimeEntry
 from app.schemas import EntryCreate, EntryRead, EntryUpdate, PaginatedEntries, TagRead
 
 router = APIRouter(tags=["entries"])
+
+MAX_TAG_LENGTH = 50
 
 
 # ---------------------------------------------------------------------------
 # Helper: resolve tag names → Tag objects, auto-creating if needed
 # ---------------------------------------------------------------------------
 async def _resolve_tags(session: AsyncSession, tag_names: list[str]) -> list[Tag]:
-    if not tag_names:
+    # Trim, strip empties, truncate, case-insensitive deduplicate
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for raw in tag_names:
+        name = raw.strip()[:MAX_TAG_LENGTH]
+        if name and name.lower() not in seen:
+            cleaned.append(name)
+            seen.add(name.lower())
+
+    if not cleaned:
         return []
 
+    # Batch-query existing tags
+    result = await session.execute(select(Tag).where(Tag.name.in_(cleaned)))
+    existing = {t.name: t for t in result.scalars().all()}
+
     tags: list[Tag] = []
-    for name in tag_names:
-        name = name.strip()
-        if not name:
-            continue
-        result = await session.execute(select(Tag).where(Tag.name == name))
-        tag = result.scalar_one_or_none()
+    for name in cleaned:
+        tag = existing.get(name)
         if tag is None:
-            tag = Tag(name=name)
-            session.add(tag)
-            await session.flush()  # get the id
+            # Handle concurrent unique-violation gracefully with SAVEPOINT
+            try:
+                async with session.begin_nested():
+                    session.add(Tag(name=name))
+            except Exception:
+                # Re-query — another request already created this tag
+                re_result = await session.execute(select(Tag).where(Tag.name == name))
+                tag = re_result.scalar_one_or_none()
+                if tag is None:
+                    raise
+                tags.append(tag)
+                continue
+            # Flush to get the id after nested transaction committed
+            await session.flush()
+            # Re-fetch the newly created tag
+            re_result = await session.execute(select(Tag).where(Tag.name == name))
+            tag = re_result.scalar_one()
         tags.append(tag)
     return tags
+
+
+# ---------------------------------------------------------------------------
+# Helper: validate category_id exists
+# ---------------------------------------------------------------------------
+async def _validate_category(session: AsyncSession, category_id: int | None) -> None:
+    if category_id is None:
+        return
+    cat = await session.get(Category, category_id)
+    if cat is None:
+        raise HTTPException(status_code=422, detail=f"Category id={category_id} not found")
+
+
+# ---------------------------------------------------------------------------
+# Helper: reload entry with relationships
+# ---------------------------------------------------------------------------
+async def _reload_entry(session: AsyncSession, entry_id: int) -> TimeEntry:
+    stmt = (
+        select(TimeEntry)
+        .options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags))
+        .where(TimeEntry.id == entry_id)
+    )
+    result = await session.execute(stmt)
+    entry = result.scalar_one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return entry
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +98,8 @@ async def create_entry(
 ):
     if body.end_time <= body.start_time:
         raise HTTPException(status_code=422, detail="end_time must be after start_time")
+
+    await _validate_category(session, body.category_id)
 
     tags = await _resolve_tags(session, body.tags)
 
@@ -62,14 +116,7 @@ async def create_entry(
     session.add(entry)
     await session.commit()
 
-    # Re-fetch with relationships loaded for response serialization
-    stmt = (
-        select(TimeEntry)
-        .options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags))
-        .where(TimeEntry.id == entry.id)
-    )
-    result = await session.execute(stmt)
-    return result.scalar_one()
+    return await _reload_entry(session, entry.id)
 
 
 @router.get("/entries", response_model=PaginatedEntries)
@@ -174,6 +221,10 @@ async def update_entry(
     if new_end <= new_start:
         raise HTTPException(status_code=422, detail="end_time must be after start_time")
 
+    # Validate category_id if being updated
+    if "category_id" in update_data:
+        await _validate_category(session, update_data["category_id"])
+
     # Handle tags separately
     if "tags" in update_data:
         tag_names = update_data.pop("tags")
@@ -183,8 +234,7 @@ async def update_entry(
         setattr(entry, key, value)
 
     await session.commit()
-    await session.refresh(entry)
-    return entry
+    return await _reload_entry(session, entry_id)
 
 
 @router.delete("/entries/{entry_id}", status_code=204)
