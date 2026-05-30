@@ -173,6 +173,31 @@ async def test_create_entry_no_overlap(client, setup_db):
     assert resp.status_code == 201
 
 
+async def test_create_entry_overlap_multiple(client, setup_db):
+    """A large entry spanning two existing ones should return 409, not 500."""
+    cid = setup_db["first_category_id"]
+    await client.post("/api/v1/entries", json={
+        "title": "entry-a",
+        "start_time": "2026-05-30T10:00:00",
+        "end_time": "2026-05-30T11:00:00",
+        "category_id": cid, "tags": [],
+    })
+    await client.post("/api/v1/entries", json={
+        "title": "entry-b",
+        "start_time": "2026-05-30T12:00:00",
+        "end_time": "2026-05-30T13:00:00",
+        "category_id": cid, "tags": [],
+    })
+    resp = await client.post("/api/v1/entries", json={
+        "title": "big-overlap",
+        "start_time": "2026-05-30T10:30:00",
+        "end_time": "2026-05-30T12:30:00",
+        "category_id": cid, "tags": [],
+    })
+    assert resp.status_code == 409
+    assert "重叠" in resp.json()["detail"]
+
+
 async def test_update_entry_overlap_excludes_self(client, setup_db):
     cid = setup_db["first_category_id"]
     # Create two entries

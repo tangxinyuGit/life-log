@@ -28,8 +28,17 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API ${res.status}: ${body}`);
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      if (data.detail) {
+        throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
+      }
+      throw new Error(JSON.stringify(data));
+    } catch (err) {
+      if (err instanceof Error && err.message !== text) throw err;
+      throw new Error(text);
+    }
   }
 
   // 204 No Content

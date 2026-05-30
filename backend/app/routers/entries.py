@@ -104,8 +104,9 @@ async def _check_overlap(
     if exclude_id is not None:
         stmt = stmt.where(TimeEntry.id != exclude_id)
 
+    stmt = stmt.limit(1)
     result = await session.execute(stmt)
-    conflict = result.scalar_one_or_none()
+    conflict = result.scalars().first()
     if conflict is not None:
         raise HTTPException(
             status_code=409,
