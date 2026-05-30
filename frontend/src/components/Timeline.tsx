@@ -131,39 +131,73 @@ export default function Timeline() {
     end: string;     // ISO
   }
 
-  function findGaps(entryList: Entry[]): Gap[] {
+  /** Format a Date to naive ISO local string matching entry timestamp format. */
+  function fmtLocalISO(d: Date): string {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}`;
+  }
+
+  function findGaps(entryList: Entry[], selectedDate: string, now = new Date()): Gap[] {
+    const today = todayStr();
+
+    // Future date → no gaps
+    if (selectedDate > today) return [];
+
+    // Effective end of the day
+    const isToday = selectedDate === today;
+    const dayEndMs = isToday
+      ? now.getTime()
+      : new Date(`${selectedDate}T23:59:59`).getTime();
+
     if (entryList.length === 0) return [];
+
     const gaps: Gap[] = [];
-    const dayStart = date + 'T00:00:00';
-    const dayEnd = date + 'T23:59:59';
+    const dayStartMs = new Date(`${selectedDate}T00:00:00`).getTime();
 
     // Before first entry
-    const firstStart = new Date(entryList[0].start_time).getTime();
-    const ds = new Date(dayStart).getTime();
-    if (firstStart > ds) {
-      gaps.push({ start: dayStart, end: entryList[0].start_time });
+    const firstStartMs = new Date(entryList[0].start_time).getTime();
+    if (firstStartMs > dayStartMs) {
+      const gapEndMs = Math.min(firstStartMs, dayEndMs);
+      if (gapEndMs > dayStartMs) {
+        gaps.push({
+          start: `${selectedDate}T00:00:00`,
+          end: fmtLocalISO(new Date(gapEndMs)),
+        });
+      }
     }
 
     // Between consecutive entries
     for (let i = 0; i < entryList.length - 1; i++) {
-      const prevEnd = new Date(entryList[i].end_time).getTime();
-      const nextStart = new Date(entryList[i + 1].start_time).getTime();
-      if (nextStart > prevEnd) {
-        gaps.push({ start: entryList[i].end_time, end: entryList[i + 1].start_time });
+      const prevEndMs = new Date(entryList[i].end_time).getTime();
+      const nextStartMs = new Date(entryList[i + 1].start_time).getTime();
+      if (prevEndMs >= dayEndMs) continue;
+      const gapEndMs = Math.min(nextStartMs, dayEndMs);
+      if (gapEndMs > prevEndMs) {
+        gaps.push({
+          start: entryList[i].end_time,
+          end: fmtLocalISO(new Date(gapEndMs)),
+        });
       }
     }
 
-    // After last entry
-    const lastEnd = new Date(entryList[entryList.length - 1].end_time).getTime();
-    const de = new Date(dayEnd).getTime();
-    if (de > lastEnd) {
-      gaps.push({ start: entryList[entryList.length - 1].end_time, end: dayEnd });
+    // After last entry — capped by effective end
+    const lastEndMs = new Date(entryList[entryList.length - 1].end_time).getTime();
+    if (dayEndMs > lastEndMs) {
+      gaps.push({
+        start: entryList[entryList.length - 1].end_time,
+        end: fmtLocalISO(new Date(dayEndMs)),
+      });
     }
 
     return gaps;
   }
 
-  const gaps = entries.length > 0 ? findGaps(entries) : [];
+  const gaps = entries.length > 0 ? findGaps(entries, date) : [];
 
   const isToday = date === todayStr();
 
