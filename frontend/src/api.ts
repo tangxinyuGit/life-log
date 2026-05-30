@@ -29,16 +29,19 @@ async function request<T>(
 
   if (!res.ok) {
     const text = await res.text();
+    let data: unknown;
     try {
-      const data = JSON.parse(text);
-      if (data.detail) {
-        throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
-      }
-      throw new Error(JSON.stringify(data));
-    } catch (err) {
-      if (err instanceof Error && err.message !== text) throw err;
-      throw new Error(text);
+      data = JSON.parse(text);
+    } catch {
+      // Not JSON — show raw text directly
+      throw new Error(text || `Request failed with status ${res.status}`);
     }
+    // JSON parsed — extract detail if present
+    if (data && typeof data === 'object' && 'detail' in data) {
+      const d = (data as Record<string, unknown>).detail;
+      throw new Error(typeof d === 'string' ? d : JSON.stringify(d));
+    }
+    throw new Error(JSON.stringify(data));
   }
 
   // 204 No Content
