@@ -82,6 +82,7 @@ export interface EntryQueryParams {
   end_date?: string;
   category_id?: number;
   keyword?: string;
+  tag?: string;
   page?: number;
   page_size?: number;
 }

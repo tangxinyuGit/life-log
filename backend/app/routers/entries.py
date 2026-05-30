@@ -75,8 +75,10 @@ async def list_entries(
     start_date: date | None = Query(None),
     end_date: date | None = Query(None),
     category_id: int | None = Query(None),
+    keyword: str | None = Query(None),
+    tag: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     session: AsyncSession = Depends(get_session),
 ):
     stmt = select(TimeEntry).options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags))
@@ -103,6 +105,17 @@ async def list_entries(
     if category_id is not None:
         stmt = stmt.where(TimeEntry.category_id == category_id)
         count_stmt = count_stmt.where(TimeEntry.category_id == category_id)
+
+    # Filter: keyword (search title and note)
+    if keyword:
+        pattern = f"%{keyword}%"
+        stmt = stmt.where(TimeEntry.title.ilike(pattern) | TimeEntry.note.ilike(pattern))
+        count_stmt = count_stmt.where(TimeEntry.title.ilike(pattern) | TimeEntry.note.ilike(pattern))
+
+    # Filter: tag
+    if tag:
+        stmt = stmt.where(TimeEntry.tags.any(Tag.name == tag))
+        count_stmt = count_stmt.where(TimeEntry.tags.any(Tag.name == tag))
 
     # Total count
     total_result = await session.execute(count_stmt)
