@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Entry, Category } from '../types';
 import { getEntries, getCategories, deleteEntry } from '../api';
+import { catDisplay } from '../helpers';
 import EntryForm from './EntryForm';
 
 // ---- helpers ------------------------------------------------
@@ -265,7 +266,7 @@ export default function Timeline() {
           <div className="summary-divider" />
           <div className="summary-stat">
             <span className="summary-stat-value">
-              {new Set(entries.map((e) => e.category.name)).size}
+              {new Set(entries.map((e) => catDisplay(e.category).name)).size}
             </span>
             <span className="summary-stat-label">类别</span>
           </div>
@@ -355,11 +356,12 @@ export default function Timeline() {
         <div className="timeline">
           {entries.map((entry) => {
             const dur = durationHours(entry.start_time, entry.end_time);
+            const cat = catDisplay(entry.category);
             return (
               <div key={entry.id} className="timeline-entry">
                 <div
                   className="entry-card"
-                  style={{ '--entry-color': entry.category.color } as React.CSSProperties}
+                  style={{ '--entry-color': cat.color } as React.CSSProperties}
                   onClick={() => handleEdit(entry)}
                 >
                   <div className="entry-card-header">
@@ -372,12 +374,12 @@ export default function Timeline() {
                     <span
                       className="category-badge"
                       style={{
-                        '--badge-bg': badgeBg(entry.category.color),
-                        '--badge-color': entry.category.color,
+                        '--badge-bg': badgeBg(cat.color),
+                        '--badge-color': cat.color,
                       } as React.CSSProperties}
                     >
                       <span className="category-badge-dot" />
-                      {entry.category.name}
+                      {cat.name}
                     </span>
                     {entry.tags.map((t) => (
                       <span key={t.id} className="tag-badge">

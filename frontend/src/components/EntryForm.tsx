@@ -105,8 +105,8 @@ export default function EntryForm({
   const [title, setTitle] = useState(entry?.title ?? '');
   const [startTime, setStartTime] = useState(defaultStart);
   const [endTime, setEndTime] = useState(defaultEnd);
-  const [categoryId, setCategoryId] = useState<number>(
-    entry?.category_id ?? (categories[0]?.id ?? 0),
+  const [categoryId, setCategoryId] = useState<number | null>(
+    entry?.category_id ?? categories[0]?.id ?? null,
   );
   const [tagsInput, setTagsInput] = useState(
     entry?.tags.map((t) => t.name).join(', ') ?? '',
@@ -120,7 +120,7 @@ export default function EntryForm({
 
   // Update default category when categories load
   useEffect(() => {
-    if (!entry && categoryId === 0 && categories.length > 0) {
+    if (!entry && categoryId === null && categories.length > 0) {
       setCategoryId(categories[0].id);
     }
   }, [categories, entry, categoryId]);
@@ -137,6 +137,11 @@ export default function EntryForm({
     e.preventDefault();
     if (!title.trim()) return;
 
+    if (new Date(endTime) <= new Date(startTime)) {
+      setError('结束时间必须晚于开始时间');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -151,7 +156,7 @@ export default function EntryForm({
           title: title.trim(),
           start_time: toISO(startTime),
           end_time: toISO(endTime),
-          category_id: categoryId,
+          category_id: categoryId ?? null,
           tags: tagNames,
           note: note.trim() || undefined,
           mood,
@@ -268,12 +273,13 @@ export default function EntryForm({
               <label className="form-label">类别</label>
               <select
                 className="form-select"
-                value={categoryId}
-                onChange={(e) => setCategoryId(Number(e.target.value))}
+                value={categoryId ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCategoryId(v === '' ? null : Number(v));
+                }}
               >
-                {categories.length === 0 && (
-                  <option value={0} disabled>加载中…</option>
-                )}
+                <option value="">无分类</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.icon ? `${cat.icon} ` : '● '}{cat.name}

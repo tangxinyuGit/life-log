@@ -49,7 +49,7 @@ export interface Entry {
     name: string;
     color: string;
     icon: string | null;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
 }

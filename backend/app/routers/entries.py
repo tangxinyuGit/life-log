@@ -44,6 +44,9 @@ async def create_entry(
     body: EntryCreate,
     session: AsyncSession = Depends(get_session),
 ):
+    if body.end_time <= body.start_time:
+        raise HTTPException(status_code=422, detail="end_time must be after start_time")
+
     tags = await _resolve_tags(session, body.tags)
 
     entry = TimeEntry(
@@ -164,6 +167,12 @@ async def update_entry(
         raise HTTPException(status_code=404, detail="Entry not found")
 
     update_data = body.model_dump(exclude_unset=True)
+
+    # Validate time range if both ends are being updated
+    new_start = update_data.get("start_time", entry.start_time)
+    new_end = update_data.get("end_time", entry.end_time)
+    if new_end <= new_start:
+        raise HTTPException(status_code=422, detail="end_time must be after start_time")
 
     # Handle tags separately
     if "tags" in update_data:

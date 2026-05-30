@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Entry, Category } from '../types';
 import { getEntries, getCategories, deleteEntry } from '../api';
+import { catDisplay } from '../helpers';
 
 // ---- helpers ------------------------------------------------
 
@@ -166,18 +167,21 @@ export default function Search() {
                       </span>
                     </div>
                     <div className="search-item-meta">
-                      {cat && (
-                        <span
-                          className="category-badge"
-                          style={{
-                            '--badge-bg': cat.color + '18',
-                            '--badge-color': cat.color,
-                          } as React.CSSProperties}
-                        >
-                          <span className="category-badge-dot" />
-                          {cat.name}
-                        </span>
-                      )}
+                      {(() => {
+                        const d = catDisplay(cat ?? null);
+                        return (
+                          <span
+                            className="category-badge"
+                            style={{
+                              '--badge-bg': d.color + '18',
+                              '--badge-color': d.color,
+                            } as React.CSSProperties}
+                          >
+                            <span className="category-badge-dot" />
+                            {d.name}
+                          </span>
+                        );
+                      })()}
                       {entry.tags.map((t) => (
                         <span key={t.id} className="tag-badge">{t.name}</span>
                       ))}
