@@ -47,6 +47,10 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {});
@@ -56,17 +60,20 @@ export default function Search() {
     setLoading(true);
     setSearched(true);
     setError(null);
+    setPage(1);
     try {
       const res = await getEntries({
         keyword: keyword.trim() || undefined,
         start_date: startDate,
         end_date: endDate,
-        page_size: 100,
+        page: 1,
+        page_size: PAGE_SIZE,
       });
       const sorted = [...res.items].sort(
         (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
       );
       setEntries(sorted);
+      setHasMore(res.total_pages > 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : '搜索失败');
     } finally {
@@ -74,9 +81,34 @@ export default function Search() {
     }
   }, [keyword, startDate, endDate]);
 
+  const loadMore = async () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const res = await getEntries({
+        keyword: keyword.trim() || undefined,
+        start_date: startDate,
+        end_date: endDate,
+        page: nextPage,
+        page_size: PAGE_SIZE,
+      });
+      const sorted = [...res.items].sort(
+        (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
+      );
+      setEntries((prev) => [...prev, ...sorted]);
+      setPage(nextPage);
+      setHasMore(nextPage < res.total_pages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载失败');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const totalHrs = entries.reduce((s, e) => s + durationHrs(e.start_time, e.end_time), 0);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, title: string) => {
+    if (!window.confirm(`确定要删除「${title}」吗？此操作不可撤销。`)) return;
     try {
       await deleteEntry(id);
       search();
@@ -195,7 +227,7 @@ export default function Search() {
                   </div>
                   <button
                     className="btn-text-sm btn-text-danger"
-                    onClick={() => handleDelete(entry.id)}
+                    onClick={() => handleDelete(entry.id, entry.title)}
                   >
                     删除
                   </button>
@@ -203,6 +235,18 @@ export default function Search() {
               );
             })}
           </div>
+
+          {hasMore && (
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button
+                className="btn btn-secondary"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? '加载中…' : '加载更多'}
+              </button>
+            </div>
+          )}
         </>
       )}
     </>

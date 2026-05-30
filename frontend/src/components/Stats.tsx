@@ -50,8 +50,17 @@ export default function Stats() {
     try {
       const start = daysAgoStr(period - 1);
       const end = todayStr();
-      const res = await getEntries({ start_date: start, end_date: end, page_size: 500 });
-      setEntries(res.items);
+      // Paginate to load all entries in the period
+      let page = 1;
+      const pageSize = 100;
+      const all: Entry[] = [];
+      while (true) {
+        const res = await getEntries({ start_date: start, end_date: end, page, page_size: pageSize });
+        all.push(...res.items);
+        if (page >= res.total_pages) break;
+        page++;
+      }
+      setEntries(all);
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载失败');
     } finally {

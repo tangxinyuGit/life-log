@@ -208,7 +208,11 @@ export default function EntryForm({
             {isEditing && onDelete && (
               <button
                 className="btn-icon-danger"
-                onClick={onDelete}
+                onClick={() => {
+                  if (window.confirm('确定要删除这条记录吗？此操作不可撤销。')) {
+                    onDelete();
+                  }
+                }}
                 title="删除"
               >
                 🗑️
