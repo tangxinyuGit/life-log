@@ -58,8 +58,15 @@ async def create_entry(
     entry.tags = tags
     session.add(entry)
     await session.commit()
-    await session.refresh(entry)
-    return entry
+
+    # Re-fetch with relationships loaded for response serialization
+    stmt = (
+        select(TimeEntry)
+        .options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags))
+        .where(TimeEntry.id == entry.id)
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one()
 
 
 @router.get("/entries", response_model=PaginatedEntries)

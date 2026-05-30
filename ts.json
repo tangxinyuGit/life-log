@@ -1,0 +1,173 @@
+{
+  "Version": "1.94.2-t0a29cf18b-g3f044c9f6",
+  "TUN": true,
+  "BackendState": "Running",
+  "HaveNodeKey": true,
+  "AuthURL": "",
+  "TailscaleIPs": [
+    "100.64.0.3",
+    "fd7a:115c:a1e0::3"
+  ],
+  "Self": {
+    "ID": "3",
+    "PublicKey": "nodekey:7fafeccaafbb695d937118378aa92f550deb71ee9eff45189288b937d2828121",
+    "HostName": "VM-0-6-ubuntu",
+    "DNSName": "server.example.com.",
+    "OS": "linux",
+    "UserID": 1,
+    "TailscaleIPs": [
+      "100.64.0.3",
+      "fd7a:115c:a1e0::3"
+    ],
+    "AllowedIPs": [
+      "100.64.0.3/32",
+      "fd7a:115c:a1e0::3/128"
+    ],
+    "Addrs": [
+      "43.156.227.53:41641",
+      "[240d:c000:f020:1300:26e2:69e2:767a:0]:41641",
+      "10.3.0.6:41641",
+      "172.17.0.1:41641",
+      "172.19.0.1:41641"
+    ],
+    "CurAddr": "",
+    "Relay": "sin",
+    "PeerRelay": "",
+    "RxBytes": 0,
+    "TxBytes": 0,
+    "Created": "2026-02-21T15:24:47.642423875Z",
+    "LastWrite": "0001-01-01T00:00:00Z",
+    "LastSeen": "0001-01-01T00:00:00Z",
+    "LastHandshake": "0001-01-01T00:00:00Z",
+    "Online": true,
+    "ExitNode": false,
+    "ExitNodeOption": false,
+    "Active": false,
+    "PeerAPIURL": [
+      "http://100.64.0.3:34152",
+      "http://[fd7a:115c:a1e0::3]:34984"
+    ],
+    "TaildropTarget": 0,
+    "NoFileSharingReason": "",
+    "Capabilities": [
+      "HTTPS://TAILSCALE.COM/s/DEPRECATED-NODE-CAPS#see-https://github.com/tailscale/tailscale/issues/11508",
+      "https://tailscale.com/cap/file-sharing",
+      "https://tailscale.com/cap/is-admin",
+      "https://tailscale.com/cap/ssh"
+    ],
+    "CapMap": {
+      "https://tailscale.com/cap/file-sharing": [],
+      "https://tailscale.com/cap/is-admin": [],
+      "https://tailscale.com/cap/ssh": []
+    },
+    "InNetworkMap": true,
+    "InMagicSock": false,
+    "InEngine": false
+  },
+  "Health": [],
+  "MagicDNSSuffix": "example.com",
+  "CurrentTailnet": {
+    "Name": "hs.tangxinyu.site",
+    "MagicDNSSuffix": "example.com",
+    "MagicDNSEnabled": true
+  },
+  "CertDomains": null,
+  "Peer": {
+    "nodekey:59b0d8e333ad58eb06a9d9305db16da8808fdf2abab712dd4b33bb517892b571": {
+      "ID": "1",
+      "PublicKey": "nodekey:59b0d8e333ad58eb06a9d9305db16da8808fdf2abab712dd4b33bb517892b571",
+      "HostName": "DESKTOP-I35EFCN",
+      "DNSName": "lab-pc.example.com.",
+      "OS": "windows",
+      "UserID": 1,
+      "TailscaleIPs": [
+        "100.64.0.1",
+        "fd7a:115c:a1e0::1"
+      ],
+      "AllowedIPs": [
+        "100.64.0.1/32",
+        "fd7a:115c:a1e0::1/128"
+      ],
+      "Addrs": null,
+      "CurAddr": "",
+      "Relay": "hkg",
+      "PeerRelay": "",
+      "RxBytes": 0,
+      "TxBytes": 0,
+      "Created": "2026-02-20T15:16:03.460213153Z",
+      "LastWrite": "2026-05-25T17:11:47.793246935+08:00",
+      "LastSeen": "0001-01-01T00:00:00Z",
+      "LastHandshake": "0001-01-01T00:00:00Z",
+      "Online": true,
+      "ExitNode": false,
+      "ExitNodeOption": false,
+      "Active": false,
+      "PeerAPIURL": [
+        "http://100.64.0.1:58436",
+        "http://[fd7a:115c:a1e0::1]:59780"
+      ],
+      "TaildropTarget": 1,
+      "NoFileSharingReason": "",
+      "CapMap": {
+        "https://tailscale.com/cap/file-sharing": [],
+        "https://tailscale.com/cap/is-admin": [],
+        "https://tailscale.com/cap/ssh": []
+      },
+      "InNetworkMap": true,
+      "InMagicSock": true,
+      "InEngine": false
+    },
+    "nodekey:8a89529e84b97d7e7e5f8c26cc7d2a1f72806a65216afd308d0b3a240b9e2551": {
+      "ID": "2",
+      "PublicKey": "nodekey:8a89529e84b97d7e7e5f8c26cc7d2a1f72806a65216afd308d0b3a240b9e2551",
+      "HostName": "Tang_PC",
+      "DNSName": "home-pc.example.com.",
+      "OS": "windows",
+      "UserID": 1,
+      "TailscaleIPs": [
+        "100.64.0.2",
+        "fd7a:115c:a1e0::2"
+      ],
+      "AllowedIPs": [
+        "100.64.0.2/32",
+        "fd7a:115c:a1e0::2/128"
+      ],
+      "Addrs": null,
+      "CurAddr": "",
+      "Relay": "hkg",
+      "PeerRelay": "",
+      "RxBytes": 1427888,
+      "TxBytes": 1264432,
+      "Created": "2026-02-20T16:39:37.155789574Z",
+      "LastWrite": "2026-05-30T10:44:59.230463089+08:00",
+      "LastSeen": "0001-01-01T00:00:00Z",
+      "LastHandshake": "2026-05-30T10:44:41.453062741+08:00",
+      "Online": true,
+      "ExitNode": false,
+      "ExitNodeOption": false,
+      "Active": false,
+      "PeerAPIURL": [
+        "http://100.64.0.2:46590",
+        "http://[fd7a:115c:a1e0::2]:47166"
+      ],
+      "TaildropTarget": 1,
+      "NoFileSharingReason": "",
+      "CapMap": {
+        "https://tailscale.com/cap/file-sharing": [],
+        "https://tailscale.com/cap/is-admin": [],
+        "https://tailscale.com/cap/ssh": []
+      },
+      "InNetworkMap": true,
+      "InMagicSock": true,
+      "InEngine": true
+    }
+  },
+  "User": {
+    "1": {
+      "ID": 1,
+      "LoginName": "mynet",
+      "DisplayName": "mynet"
+    }
+  },
+  "ClientVersion": null
+}

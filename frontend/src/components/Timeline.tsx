@@ -60,6 +60,8 @@ export default function Timeline() {
   // Modal state
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [presetStart, setPresetStart] = useState<string | undefined>();
+  const [presetEnd, setPresetEnd] = useState<string | undefined>();
 
   // Fetch categories once
   useEffect(() => {
@@ -176,6 +178,15 @@ export default function Timeline() {
 
   const handleAdd = () => {
     setEditingEntry(null);
+    setPresetStart(undefined);
+    setPresetEnd(undefined);
+    setShowForm(true);
+  };
+
+  const handleGapFill = (start: string, end: string) => {
+    setEditingEntry(null);
+    setPresetStart(start);
+    setPresetEnd(end);
     setShowForm(true);
   };
 
@@ -198,6 +209,8 @@ export default function Timeline() {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingEntry(null);
+    setPresetStart(undefined);
+    setPresetEnd(undefined);
   };
 
   const handleFormSaved = () => {
@@ -304,6 +317,13 @@ export default function Timeline() {
                     {fmtTime(gap.start)} – {fmtTime(gap.end)}
                   </span>
                   <span className="gap-duration">{fmtDuration(dur)}</span>
+                  <button
+                    className="gap-fill-btn"
+                    onClick={() => handleGapFill(gap.start, gap.end)}
+                    title="快速补记此段时间"
+                  >
+                    + 补记
+                  </button>
                 </div>
               </div>
             );
@@ -402,6 +422,8 @@ export default function Timeline() {
           categories={categories}
           date={date}
           lastEndTime={lastEndTime}
+          presetStartTime={presetStart}
+          presetEndTime={presetEnd}
           onClose={handleFormClose}
           onSaved={handleFormSaved}
           onDelete={editingEntry ? () => handleDelete(editingEntry.id) : undefined}

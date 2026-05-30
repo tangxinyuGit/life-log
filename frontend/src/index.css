@@ -756,6 +756,24 @@ body {
   white-space: nowrap;
 }
 
+.gap-fill-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--accent);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.gap-fill-btn:hover {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
 /* ---- FAB (Floating Action Button) ---- */
 .fab {
   position: fixed;

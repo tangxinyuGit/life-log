@@ -9,6 +9,8 @@ interface EntryFormProps {
   categories: Category[];
   date: string;                 // current date YYYY-MM-DD
   lastEndTime?: string;         // last entry's end_time for smart defaults
+  presetStartTime?: string;     // pre-fill start_time (ISO, gap quick-fill)
+  presetEndTime?: string;       // pre-fill end_time (ISO, gap quick-fill)
   onClose: () => void;
   onSaved: () => void;
   onDelete?: () => void;
@@ -40,9 +42,12 @@ function toDatetimeLocal(d: Date): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
-/** Convert datetime-local value to ISO string (local time interpreted as UTC offset) */
+/** Convert datetime-local value to ISO string (naive, matches backend) */
 function toISO(datetimeLocal: string): string {
-  return new Date(datetimeLocal).toISOString();
+  // Return local datetime without timezone conversion.
+  // The backend stores naive datetimes — sending UTC would offset
+  // the time by timezone hours and break date filtering.
+  return datetimeLocal + ':00';
 }
 
 /** Convert an ISO string to datetime-local value */
@@ -76,19 +81,25 @@ export default function EntryForm({
   onClose,
   onSaved,
   onDelete,
+  presetStartTime,
+  presetEndTime,
 }: EntryFormProps) {
   const isEditing = entry !== null;
 
   // Smart defaults for start_time
   const defaultStart = entry
     ? isoToLocal(entry.start_time)
-    : lastEndTime
-      ? isoToLocal(lastEndTime)
-      : nowHourLocal();
+    : presetStartTime
+      ? isoToLocal(presetStartTime)
+      : lastEndTime
+        ? isoToLocal(lastEndTime)
+        : nowHourLocal();
 
   const defaultEnd = entry
     ? isoToLocal(entry.end_time)
-    : addHours(defaultStart, 1);
+    : presetEndTime
+      ? isoToLocal(presetEndTime)
+      : addHours(defaultStart, 1);
 
   // Form state
   const [title, setTitle] = useState(entry?.title ?? '');
