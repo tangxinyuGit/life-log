@@ -2,10 +2,10 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 
 const navItems = [
-  { to: '/', icon: 'T', label: '时间线' },
-  { to: '/stats', icon: 'A', label: '统计' },
-  { to: '/search', icon: 'S', label: '搜索' },
-  { to: '/settings', icon: 'C', label: '设置' },
+  { to: '/', icon: '●', label: '时间线' },
+  { to: '/stats', icon: '▦', label: '统计' },
+  { to: '/search', icon: '⌕', label: '搜索' },
+  { to: '/settings', icon: '◇', label: '设置' },
 ];
 
 export default function Layout() {
