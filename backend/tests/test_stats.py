@@ -1,6 +1,31 @@
 import pytest
 
 
+async def test_stats_summary_invalid_date_range(client, setup_db):
+    resp = await client.get("/api/v1/stats/summary", params={
+        "start_date": "2026-06-07",
+        "end_date": "2026-06-01",
+    })
+    assert resp.status_code == 422
+    assert "start_date" in resp.json()["detail"]
+
+
+async def test_stats_summary_empty_with_zero_days(client, setup_db):
+    """Empty range should still fill by_day with zeroes for each date."""
+    resp = await client.get("/api/v1/stats/summary", params={
+        "start_date": "2026-06-01",
+        "end_date": "2026-06-03",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total_hours"] == 0.0
+    assert data["active_days"] == 0
+    assert len(data["by_day"]) == 3
+    assert data["by_day"][0]["date"] == "2026-06-01"
+    assert data["by_day"][0]["hours"] == 0.0
+    assert data["by_day"][2]["date"] == "2026-06-03"
+
+
 async def test_stats_summary_empty(client, setup_db):
     resp = await client.get("/api/v1/stats/summary", params={
         "start_date": "2026-06-01",
@@ -11,7 +36,7 @@ async def test_stats_summary_empty(client, setup_db):
     assert data["total_hours"] == 0.0
     assert data["total_entries"] == 0
     assert data["active_days"] == 0
-    assert data["by_day"] == []
+    assert len(data["by_day"]) == 7  # zero-filled for each date
     assert data["by_category"] == []
 
 
@@ -46,7 +71,7 @@ async def test_stats_summary_by_day(client, setup_db):
     assert data["total_entries"] == 3
     assert data["active_days"] == 2
     assert data["avg_hours_per_active_day"] == 2.0
-    assert len(data["by_day"]) == 2
+    assert len(data["by_day"]) == 2  # 2026-06-01, 2026-06-02
     assert data["by_day"][0]["date"] == "2026-06-01"
     assert data["by_day"][0]["hours"] == 3.0
     assert data["by_day"][1]["date"] == "2026-06-02"
@@ -55,13 +80,11 @@ async def test_stats_summary_by_day(client, setup_db):
 
 async def test_stats_summary_by_category(client, setup_db):
     cid1 = setup_db["first_category_id"]
-    # Create a second category
-    resp = await client.post("/api/v1/categories", json={
-        "name": "运动", "color": "#ef4444", "icon": "🏃", "sort_order": 4,
-    })
-    # Should 409 since "运动" already exists in defaults
-    # Use existing category instead
-    cid2 = cid1 + 4  # "运动" is 5th in defaults (0-indexed sort, 5th id)
+    # Fetch categories and find "运动" by name instead of fragile ID math
+    cats_resp = await client.get("/api/v1/categories")
+    cats = cats_resp.json()
+    sport_cat = next(c for c in cats if c["name"] == "运动")
+    cid2 = sport_cat["id"]
 
     await client.post("/api/v1/entries", json={
         "title": "work",

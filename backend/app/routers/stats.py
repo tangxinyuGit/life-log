@@ -1,8 +1,8 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
@@ -54,6 +54,12 @@ async def get_stats_summary(
     end_date: date = Query(...),
     session: AsyncSession = Depends(get_session),
 ) -> StatsSummary:
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=422,
+            detail="start_date must be before or equal to end_date",
+        )
+
     day_start = datetime.combine(start_date, time.min)
     day_end = datetime.combine(end_date, time.max)
 
@@ -70,11 +76,7 @@ async def get_stats_summary(
     cat_result = await session.execute(select(Category))
     cats = {c.id: c for c in cat_result.scalars().all()}
 
-    if not entries:
-        return StatsSummary()
-
     # ---- Compute stats ----
-
     total_hours = 0.0
     day_hours: dict[str, float] = {}
     cat_hours: dict[str, dict] = {}  # key → { name, color, icon, hours }
@@ -119,12 +121,14 @@ async def get_stats_summary(
         if entry.energy is not None:
             energies.append(entry.energy)
 
-    # Day stats sorted by date
-    active_days = len(day_hours)
-    by_day = sorted(
-        [DayStat(date=d, hours=round(h, 2)) for d, h in day_hours.items()],
-        key=lambda x: x.date,
-    )
+    # Day stats — fill the full date range, zero for days with no entries
+    active_days = sum(1 for h in day_hours.values() if h > 0)
+    by_day: list[DayStat] = []
+    cursor = start_date
+    while cursor <= end_date:
+        d = cursor.strftime("%Y-%m-%d")
+        by_day.append(DayStat(date=d, hours=round(day_hours.get(d, 0.0), 2)))
+        cursor += timedelta(days=1)
 
     # Category stats sorted by hours descending
     by_category = sorted(
