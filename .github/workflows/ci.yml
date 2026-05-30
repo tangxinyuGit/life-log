@@ -22,7 +22,7 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: pytest -v
+        run: PYTHONPATH=. pytest -v
 
   frontend:
     runs-on: ubuntu-latest
