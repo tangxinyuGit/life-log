@@ -11,6 +11,7 @@ import type {
   EntryUpdate,
   EntryQueryParams,
   PaginatedEntries,
+  StatsSummary,
   Tag,
 } from './types';
 
@@ -114,4 +115,15 @@ export async function deleteEntry(id: number): Promise<void> {
 
 export async function getTags(keyword?: string): Promise<Tag[]> {
   return request<Tag[]>(`/tags${qs({ keyword })}`);
+}
+
+// ---- Stats --------------------------------------------------
+
+export async function getStatsSummary(
+  startDate: string,
+  endDate: string,
+): Promise<StatsSummary> {
+  return request<StatsSummary>(
+    `/stats/summary${qs({ start_date: startDate, end_date: endDate })}`,
+  );
 }

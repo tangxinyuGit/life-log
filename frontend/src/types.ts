@@ -94,3 +94,30 @@ export interface PaginatedEntries {
   page_size: number;
   total_pages: number;
 }
+
+// ---- Stats ----
+
+export interface DayStat {
+  date: string;
+  hours: number;
+}
+
+export interface CategoryStat {
+  category_id: number | null;
+  name: string;
+  color: string;
+  icon: string | null;
+  hours: number;
+  percentage: number;
+}
+
+export interface StatsSummary {
+  total_hours: number;
+  total_entries: number;
+  active_days: number;
+  avg_hours_per_active_day: number;
+  by_day: DayStat[];
+  by_category: CategoryStat[];
+  mood: { average: number | null; count: number };
+  energy: { average: number | null; count: number };
+}
