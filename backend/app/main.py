@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 
 from app.database import engine, async_session, ensure_data_directory
 from app.models import Base, Category
-from app.routers import categories, entries
+from app.routers import categories, entries, stats
 
 
 DEFAULT_CATEGORIES = [
@@ -60,6 +60,7 @@ app.add_middleware(
 
 app.include_router(categories.router, prefix="/api/v1")
 app.include_router(entries.router, prefix="/api/v1")
+app.include_router(stats.router, prefix="/api/v1")
 
 
 @app.get("/health")
