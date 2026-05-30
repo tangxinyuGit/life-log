@@ -20,6 +20,14 @@ export interface CategoryCreate {
   sort_order?: number;
 }
 
+export interface CategoryUpdate {
+  name?: string;
+  color?: string;
+  icon?: string;
+  sort_order?: number;
+  is_archived?: boolean;
+}
+
 export interface Tag {
   id: number;
   name: string;

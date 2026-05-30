@@ -5,6 +5,7 @@
 import type {
   Category,
   CategoryCreate,
+  CategoryUpdate,
   Entry,
   EntryCreate,
   EntryUpdate,
@@ -48,8 +49,9 @@ function qs(params: Record<string, string | number | undefined>): string {
 
 // ---- Categories ---------------------------------------------
 
-export async function getCategories(): Promise<Category[]> {
-  return request<Category[]>('/categories');
+export async function getCategories(includeArchived = false): Promise<Category[]> {
+  const suffix = includeArchived ? '?include_archived=true' : '';
+  return request<Category[]>(`/categories${suffix}`);
 }
 
 export async function createCategory(data: CategoryCreate): Promise<Category> {
@@ -57,6 +59,17 @@ export async function createCategory(data: CategoryCreate): Promise<Category> {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export async function updateCategory(id: number, data: CategoryUpdate): Promise<Category> {
+  return request<Category>(`/categories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function archiveCategory(id: number): Promise<void> {
+  return request<void>(`/categories/${id}`, { method: 'DELETE' });
 }
 
 // ---- Entries ------------------------------------------------

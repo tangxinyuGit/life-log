@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Timeline from './components/Timeline';
+import Settings from './components/Settings';
 import './index.css';
 
 // ---- Placeholder pages (P2 will replace these) -------------
@@ -31,18 +32,6 @@ function SearchPage() {
   );
 }
 
-function SettingsPage() {
-  return (
-    <div className="placeholder-page">
-      <div className="placeholder-page-icon">⚙️</div>
-      <div className="placeholder-page-title">设置</div>
-      <div className="placeholder-page-desc">
-        这里将管理分类、标签和偏好设置。
-      </div>
-    </div>
-  );
-}
-
 // ---- App ----------------------------------------------------
 
 createRoot(document.getElementById('root')!).render(
@@ -53,7 +42,7 @@ createRoot(document.getElementById('root')!).render(
           <Route index element={<Timeline />} />
           <Route path="stats" element={<StatsPage />} />
           <Route path="search" element={<SearchPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -91,6 +91,21 @@ life-log/
 └── README.md
 ```
 
+## 开发约定
+
+### 时间处理
+
+| 层级 | 约定 |
+|------|------|
+| 前端 | 发送 naive datetime（无时区），不进行 UTC 转换 |
+| 后端 | 存储和过滤均使用 naive datetime，按本地日期匹配 |
+| Pydantic Schema | `datetime` 字段接收无时区 ISO 字符串 |
+| SQLite | `DateTime` 列存储为无时区文本 |
+
+**为什么：** 项目部署环境（新加坡 UTC+8）与用户本地时区一致，后端使用 naive datetime 简化日期过滤逻辑。`<input type="datetime-local">` 输出的值是本地时间，前端 `toISO()` 直接拼接为 `YYYY-MM-DDTHH:mm:00` 发送，不做 `new Date().toISOString()` 的 UTC 偏移转换。
+
+**注意：** 如果未来需要支持多时区用户，需要将后端改为 UTC 存储 + 前端做时区感知转换。当前阶段保持简单。
+
 ## API 概览
 
 | 方法 | 路径 | 说明 |
