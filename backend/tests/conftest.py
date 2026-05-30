@@ -1,15 +1,24 @@
-import os
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.database import get_session
 from app.models import Base, Category
 
 
-# In-memory SQLite — each test run gets a fresh DB
+# In-memory SQLite — each test gets a fresh DB
 TEST_DB_URL = "sqlite+aiosqlite://"
 
 _test_engine = create_async_engine(TEST_DB_URL, echo=False)
+
+
+@event.listens_for(_test_engine.sync_engine, "connect")
+def _test_sqlite_pragma(dbapi_connection, _connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
 _test_sessionmaker = async_sessionmaker(_test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -32,17 +41,15 @@ DEFAULT_CATS = [
 
 @pytest.fixture
 async def setup_db():
-    """Create schema + seed categories once; returns dict with first category id."""
+    """Fresh DB per test: drop-all → create-all → seed categories."""
     async with _test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     async with _test_sessionmaker() as session:
-        from sqlalchemy import select, func
-        result = await session.execute(select(func.count(Category.id)))
-        if result.scalar_one() == 0:
-            for cat_data in DEFAULT_CATS:
-                session.add(Category(**cat_data))
-            await session.commit()
+        for cat_data in DEFAULT_CATS:
+            session.add(Category(**cat_data))
+        await session.commit()
 
     # Fetch the first category id for test use
     async with _test_sessionmaker() as session:
