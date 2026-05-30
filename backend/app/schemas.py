@@ -77,6 +77,7 @@ class EntryRead(BaseModel):
     start_time: datetime
     end_time: datetime
     category_id: Optional[int] = None
+    category: Optional[CategoryRead] = None
     note: str
     mood: Optional[int] = None
     energy: Optional[int] = None

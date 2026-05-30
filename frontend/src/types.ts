@@ -36,6 +36,12 @@ export interface Entry {
   mood: number | null;
   energy: number | null;
   tags: Tag[];
+  category: {
+    id: number;
+    name: string;
+    color: string;
+    icon: string | null;
+  };
   created_at: string;
   updated_at: string;
 }

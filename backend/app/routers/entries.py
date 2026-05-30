@@ -72,7 +72,7 @@ async def list_entries(
     page_size: int = Query(20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ):
-    stmt = select(TimeEntry).options(selectinload(TimeEntry.tags))
+    stmt = select(TimeEntry).options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags))
     count_stmt = select(func.count(TimeEntry.id))
 
     # Filter: single date
@@ -123,7 +123,7 @@ async def get_entry(
     entry_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    stmt = select(TimeEntry).options(selectinload(TimeEntry.tags)).where(TimeEntry.id == entry_id)
+    stmt = select(TimeEntry).options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags)).where(TimeEntry.id == entry_id)
     result = await session.execute(stmt)
     entry = result.scalar_one_or_none()
     if not entry:
@@ -137,7 +137,7 @@ async def update_entry(
     body: EntryUpdate,
     session: AsyncSession = Depends(get_session),
 ):
-    stmt = select(TimeEntry).options(selectinload(TimeEntry.tags)).where(TimeEntry.id == entry_id)
+    stmt = select(TimeEntry).options(selectinload(TimeEntry.category), selectinload(TimeEntry.tags)).where(TimeEntry.id == entry_id)
     result = await session.execute(stmt)
     entry = result.scalar_one_or_none()
     if not entry:
