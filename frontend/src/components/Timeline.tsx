@@ -96,6 +96,72 @@ export default function Timeline() {
     0,
   );
 
+  // ---- Category breakdown (name → total hours) ----
+  interface CatBreakdown {
+    name: string;
+    color: string;
+    icon: string | null;
+    hours: number;
+  }
+
+  const catMap = new Map<string, CatBreakdown>();
+  for (const e of entries) {
+    const dur = durationHours(e.start_time, e.end_time);
+    const name = e.category?.name ?? '未分类';
+    const existing = catMap.get(name);
+    if (existing) {
+      existing.hours += dur;
+    } else {
+      catMap.set(name, {
+        name,
+        color: e.category?.color ?? '#6b7280',
+        icon: e.category?.icon ?? null,
+        hours: dur,
+      });
+    }
+  }
+  const catBreakdown = [...catMap.values()].sort((a, b) => b.hours - a.hours);
+
+  // ---- Gap detection ----
+  interface Gap {
+    start: string;   // ISO
+    end: string;     // ISO
+  }
+
+  function findGaps(entryList: Entry[]): Gap[] {
+    if (entryList.length === 0) return [];
+    const gaps: Gap[] = [];
+    const dayStart = date + 'T00:00:00';
+    const dayEnd = date + 'T23:59:59';
+
+    // Before first entry
+    const firstStart = new Date(entryList[0].start_time).getTime();
+    const ds = new Date(dayStart).getTime();
+    if (firstStart > ds) {
+      gaps.push({ start: dayStart, end: entryList[0].start_time });
+    }
+
+    // Between consecutive entries
+    for (let i = 0; i < entryList.length - 1; i++) {
+      const prevEnd = new Date(entryList[i].end_time).getTime();
+      const nextStart = new Date(entryList[i + 1].start_time).getTime();
+      if (nextStart > prevEnd) {
+        gaps.push({ start: entryList[i].end_time, end: entryList[i + 1].start_time });
+      }
+    }
+
+    // After last entry
+    const lastEnd = new Date(entryList[entryList.length - 1].end_time).getTime();
+    const de = new Date(dayEnd).getTime();
+    if (de > lastEnd) {
+      gaps.push({ start: entryList[entryList.length - 1].end_time, end: dayEnd });
+    }
+
+    return gaps;
+  }
+
+  const gaps = entries.length > 0 ? findGaps(entries) : [];
+
   const isToday = date === todayStr();
 
   // Format date for display – e.g. "2026-05-30 周六"
@@ -190,6 +256,58 @@ export default function Timeline() {
             </span>
             <span className="summary-stat-label">类别</span>
           </div>
+        </div>
+      )}
+
+      {/* Category Breakdown */}
+      {!loading && catBreakdown.length > 0 && (
+        <div className="breakdown-section">
+          <h2 className="breakdown-title">分类耗时</h2>
+          <div className="breakdown-list">
+            {catBreakdown.map((cat) => (
+              <div key={cat.name} className="breakdown-item">
+                <div className="breakdown-item-left">
+                  <span
+                    className="breakdown-dot"
+                    style={{ background: cat.color }}
+                  />
+                  <span className="breakdown-item-name">
+                    {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                  </span>
+                </div>
+                <div className="breakdown-item-right">
+                  <span className="breakdown-item-hours">{fmtDuration(cat.hours)}</span>
+                  <span className="breakdown-item-pct">
+                    {totalHours > 0
+                      ? `${Math.round((cat.hours / totalHours) * 100)}%`
+                      : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gaps */}
+      {!loading && gaps.length > 0 && (
+        <div className="gaps-section">
+          {gaps.map((gap, idx) => {
+            const dur = durationHours(gap.start, gap.end);
+            if (dur < 0.02) return null; // skip < 1 minute
+            return (
+              <div key={idx} className="gap-entry">
+                <div className="gap-line" />
+                <div className="gap-info">
+                  <span className="gap-label">未记录</span>
+                  <span className="gap-time">
+                    {fmtTime(gap.start)} – {fmtTime(gap.end)}
+                  </span>
+                  <span className="gap-duration">{fmtDuration(dur)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
