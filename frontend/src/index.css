@@ -1033,18 +1033,18 @@ ul, ol { list-style: none; }
 
 .empty-state-icon,
 .placeholder-page-icon {
-  display: none;
-}
-
-.empty-state::before {
-  content: '';
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 56px;
   height: 56px;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
   border: 1.5px solid var(--border-color);
   border-radius: 18px;
   background: var(--bg-soft);
+  font-size: 0;
+  opacity: 1;
+  filter: none;
 }
 
 .empty-state-title,
